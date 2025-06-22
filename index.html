@@ -2,50 +2,159 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Idle-Empire Auto Mining</title>
+  <title>Idle-Empire Mining Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial;
-      background: #0f172a;
-      color: #fff;
-      text-align: center;
-      padding: 50px;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
     }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .container {
+      max-width: 400px;
+      width: 100%;
+      background-color: #1e293b;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    }
+
     input, button {
-      padding: 10px;
-      margin: 10px;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
       border-radius: 8px;
       border: none;
+      font-size: 16px;
     }
-    #result {
+
+    input {
+      background-color: #334155;
+      color: #fff;
+    }
+
+    button {
+      background-color: #22c55e;
+      color: #fff;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #16a34a;
+    }
+
+    .secondary {
+      background-color: #3b82f6;
+    }
+
+    .secondary:hover {
+      background-color: #2563eb;
+    }
+
+    .danger {
+      background-color: #ef4444;
+    }
+
+    .danger:hover {
+      background-color: #dc2626;
+    }
+
+    #status {
       margin-top: 20px;
-      font-size: 20px;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      display: none;
+      text-align: center;
     }
+
+    .success { background-color: #15803d; color: white; }
+    .error { background-color: #7f1d1d; color: white; }
+    .info { background-color: #1e40af; color: white; }
   </style>
 </head>
 <body>
-  <h1>💰 Idle-Empire Auto Mining</h1>
-  <input type="text" id="email" placeholder="Email Idle-Empire"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="startMining()">Mulai Mining</button>
 
-  <div id="result">Status: Menunggu...</div>
+  <h1>🚀 Idle-Empire Mining Panel</h1>
+  <div class="container">
+    <input type="email" id="email" placeholder="Email Idle-Empire" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button onclick="startMining()">Mulai Mining</button>
+    <button class="secondary" onclick="checkBalance()">Cek Saldo</button>
+    <button class="danger" onclick="stopMining()">Stop Mining</button>
+
+    <div id="status"></div>
+  </div>
 
   <script>
+    const backend = "http://192.168.100.64:3000"; // Ganti IP sesuai lokal
+
+    function showStatus(msg, type = "info") {
+      const el = document.getElementById("status");
+      el.innerText = msg;
+      el.className = type;
+      el.style.display = "block";
+    }
+
     async function startMining() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const result = document.getElementById("result");
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-      const res = await fetch("http://192.168.100.64:5009/start", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({email, password})
-      });
+      if (!email || !password) {
+        showStatus("❗ Harap isi semua data!", "error");
+        return;
+      }
 
-      const data = await res.json();
-      result.innerText = `Status: ${data.status} | Saldo: ${data.saldo ?? 0} poin`;
+      showStatus("🔄 Proses login dan mulai mining...", "info");
+      try {
+        const res = await fetch(`${backend}/start-mining`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.status.toLowerCase().includes("gagal")) {
+          showStatus("❌ " + data.login_status, "error");
+        } else {
+          showStatus("✅ " + data.login_status + " → " + data.status, "success");
+        }
+      } catch {
+        showStatus("❌ Tidak bisa terhubung ke server", "error");
+      }
+    }
+
+    async function checkBalance() {
+      showStatus("🔍 Mengambil saldo...", "info");
+      try {
+        const res = await fetch(`${backend}/balance`);
+        const data = await res.json();
+        showStatus(`💰 Saldo akun kamu: ${data.balance} poin`, "success");
+      } catch {
+        showStatus("❌ Gagal mengambil saldo", "error");
+      }
+    }
+
+    async function stopMining() {
+      showStatus("🛑 Menghentikan mining...", "info");
+      try {
+        const res = await fetch(`${backend}/stop-mining`);
+        const data = await res.json();
+        showStatus("🛑 " + data.status, "success");
+      } catch {
+        showStatus("❌ Gagal menghentikan", "error");
+      }
     }
   </script>
+
 </body>
 </html>
