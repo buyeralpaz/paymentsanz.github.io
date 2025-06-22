@@ -1,98 +1,51 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🔥 Auto Mining Idle-Empire</title>
+  <meta charset="UTF-8">
+  <title>Idle-Empire Auto Mining</title>
   <style>
     body {
-      background: #111;
-      color: #00ffcc;
-      font-family: 'Courier New', monospace;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      background: #1e1e1e;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px #00ff88;
+      font-family: Arial;
+      background: #0f172a;
+      color: #fff;
       text-align: center;
-      max-width: 400px;
-      width: 90%;
+      padding: 50px;
     }
-    h1 {
-      color: #00ffff;
-      margin-bottom: 20px;
-    }
-    .status {
-      margin: 15px 0;
-      font-size: 1.1rem;
-    }
-    .balance {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #ffffff;
-    }
-    .btn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #00ff99;
-      border: none;
+    input, button {
+      padding: 10px;
+      margin: 10px;
       border-radius: 8px;
-      font-weight: bold;
-      color: #000;
-      cursor: pointer;
+      border: none;
     }
-    .btn:hover {
-      background: #00cc77;
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
     }
   </style>
 </head>
 <body>
+  <h1>💰 Idle-Empire Auto Mining</h1>
+  <input type="text" id="email" placeholder="Email Idle-Empire"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="startMining()">Mulai Mining</button>
 
-  <div class="container">
-    <h1>⛏️ AUTO-MINER</h1>
-    <div class="status" id="status">Menunggu perintah...</div>
-    <div>Total Poin:</div>
-    <div class="balance" id="balance">0</div>
-    <button class="btn" onclick="startMining()">Mulai Mining</button>
-  </div>
+  <div id="result">Status: Menunggu...</div>
 
   <script>
-    const BACKEND_URL = "http://192.168.100.64:5000"; // Ganti IP ini ke IP Termux kamu
-
     async function startMining() {
-      document.getElementById("status").textContent = "🔄 Menghubungkan ke backend...";
-      try {
-        const res = await fetch(`${BACKEND_URL}/start-mining`);
-        const data = await res.json();
-        if (data.status === "started" || data.status === "already_running") {
-          document.getElementById("status").textContent = "⛏️ Mining sedang berjalan...";
-          updateBalance();
-        } else {
-          document.getElementById("status").textContent = "❌ Gagal memulai mining.";
-        }
-      } catch (err) {
-        document.getElementById("status").textContent = "⚠️ Gagal konek ke backend!";
-      }
-    }
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const result = document.getElementById("result");
 
-    async function updateBalance() {
-      setInterval(async () => {
-        try {
-          const res = await fetch(`${BACKEND_URL}/balance`);
-          const data = await res.json();
-          document.getElementById("balance").textContent = data.balance + " pts";
-        } catch {
-          document.getElementById("status").textContent = "⚠️ Gagal ambil saldo!";
-        }
-      }, 3000);
+      const res = await fetch("http://192.168.100.64:5009/start", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({email, password})
+      });
+
+      const data = await res.json();
+      result.innerText = `Status: ${data.status} | Saldo: ${data.saldo ?? 0} poin`;
     }
   </script>
-
 </body>
 </html>
